@@ -1,0 +1,15 @@
+
+# data
+/videos/videos
+/videos
+
+# local
+.env.local
+.env/*
+/venv
+/venv/
+venv
+.env
+
+
+__pycache__
