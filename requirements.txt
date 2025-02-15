@@ -1,27 +1,9 @@
-
-torch==2.0.0  # PyTorch 
-torchvision==0.15.0  # For image and video processing
-transformers==4.30.0  # Pre-trained transformer models (Llama, BERT, ViT)
-
-opencv-python==4.8.0.76  # Frame extraction
-timm==0.9.8  # VIT
-
-numpy==1.23.5  # numerical operations and  tensors
-scipy==1.10.1  # scientific computations
-
-tokenizers==0.13.3  # Optimized tokenization
-
-ffmpeg-python==0.2.0  # Video decoding 
-Pillow==9.4.0  # Image processing 
-
-accelerate==0.21.0  # Mlti-GPU and model acceleration
-torchmetrics==0.11.0  # metrics
-
-pandas==1.5.3  # CSV
-tqdm==4.65.1  # progress bars
-
-matplotlib==3.7.1  # Plotting 
-scikit-learn==1.2.2  # preprocessing
-
-huggingface_hub==0.25.0 # data
-protobuf==3.20.3
+torch
+numpy
+transformers
+pandas
+opencv-python
+Pillow
+ftfy
+regex
+tqdm

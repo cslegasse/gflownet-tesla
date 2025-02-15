@@ -1,12 +1,11 @@
 import cv2
 import torch
 import pandas as pd
-import numpy as np
-import clip
 from PIL import Image
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, CLIPProcessor, CLIPModel
 
-print(torch.cuda.is_available())
+device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
 # Load language model and tokenizer
 llm_name = "facebook/bart-large"
@@ -14,7 +13,9 @@ tokenizer = AutoTokenizer.from_pretrained(llm_name)
 language_model = AutoModelForSeq2SeqLM.from_pretrained(llm_name)
 
 # Load CLIP for vision-language encoding
-clip_model, preprocess = clip.load("ViT-B/32", jit=False, device = "cuda" if torch.cuda.is_available() else "cpu")
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
 
 def extract_video_features(video_path):
     """Extracts key frames and detects objects."""
@@ -33,25 +34,35 @@ def extract_video_features(video_path):
 
     return frames
 
+
 def encode_text(text):
     """Encodes text using CLIP model."""
-    text_encoded = clip.tokenize([text]).to("cuda")
-    with torch.no_grad():
-        text_features = clip_model.encode_text(text_encoded)
+    inputs = processor(text=[text], images=None, return_tensors="pt", padding=True, truncation=True)
+    text_features = model.get_text_features(inputs["input_ids"].to(device))
     return text_features
 
-def encode_video(frames):
-    """Encodes video frames using CLIP."""
+
+def encode_video(frames, batch_size=32):
+    """Encodes video frames using CLIP with batch processing."""
     if len(frames) == 0:
         raise ValueError("No frames provided to encode_video.")
-    
-    # Convert each frame to a PIL Image before preprocessing
+
     pil_frames = [Image.fromarray(frame) for frame in frames]
-    
-    frame_tensors = torch.stack([preprocess(frame).to("cuda") for frame in pil_frames])
-    with torch.no_grad():
-        video_features = clip_model.encode_image(frame_tensors)
+
+    all_frame_features = []
+    for i in range(0, len(pil_frames), batch_size):
+        batch_frames = pil_frames[i:i + batch_size]
+        inputs = processor(images=batch_frames, return_tensors="pt", padding=True)
+        frame_tensors = inputs["pixel_values"].to(device)
+
+        with torch.no_grad():  # Disable gradient calculation during inference
+            batch_features = model.get_image_features(frame_tensors)
+        all_frame_features.append(batch_features)
+
+    # Concatenate the features from all batches
+    video_features = torch.cat(all_frame_features, dim=0)
     return video_features.mean(dim=0)  # Aggregate features
+
 
 class GFlowNet(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim=256, output_dim=4):
@@ -68,13 +79,17 @@ class GFlowNet(torch.nn.Module):
         x = self.softmax(self.fc3(x))
         return x
 
+
 def gflow_infer(video_features, text_features):
     """Implements GFLOW Net reasoning to select the best answer."""
-    input_dim = video_features.shape[0] + text_features.shape[0]
-    gflow_model = GFlowNet(input_dim=input_dim)
-    combined_features = torch.cat([video_features, text_features], dim=0).unsqueeze(0)
+    input_dim = video_features.shape[1] + text_features.shape[1]
+    gflow_model = GFlowNet(input_dim=input_dim).to(device)
+    video_features = video_features.to(device)
+    text_features = text_features.to(device)
+    combined_features = torch.cat([video_features, text_features], dim=1)
     predicted_answer = gflow_model(combined_features)
     return predicted_answer.argmax().item()
+
 
 def process_single_sample(video_path, question):
     """Processes a single video-question pair."""
@@ -82,6 +97,7 @@ def process_single_sample(video_path, question):
     text_features = encode_text(question)
     answer_idx = gflow_infer(video_features, text_features)
     return answer_idx
+
 
 # Load questions dataset
 questions_df = pd.read_csv("data/questions.csv")
