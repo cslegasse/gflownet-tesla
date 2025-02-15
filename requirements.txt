@@ -7,3 +7,5 @@ Pillow
 ftfy
 regex
 tqdm
+google-generativeai 
+python-dotenv
