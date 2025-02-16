@@ -8,7 +8,9 @@ pandas
 opencv-python
 Pillow
 ftfy
+pydantic
 regex
 tqdm
 google-generativeai
+google-genai
 python-dotenv
