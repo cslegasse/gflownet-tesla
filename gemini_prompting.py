@@ -15,7 +15,6 @@ def read_csv(input_file):
 input_csv = "/Users/nanaki/treehacks25/tesla-real-world-video-q-a/questions.csv"  # Replace with your actual file name
 content_csv = read_csv(input_csv)
 
-genai.configure(api_key="AIzaSyB_4eKBM8FfLWNc8OJocFAWw5tlly5WSpc")
 video_paths = os.listdir('tesla-real-world-video-q-a/videos/videos')
 
 for i in range(len(video_paths)):
