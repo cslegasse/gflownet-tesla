@@ -1,4 +1,6 @@
 import time
+import av
+import numpy as np
 import os
 import cv2
 import torch
@@ -20,8 +22,8 @@ clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 # Load LLAVA VLM model for video summarization
 llava_model_name = "LanguageBind/Video-LLaVA-7B-hf"
-llava_processor = VideoLlavaForConditionalGeneration.from_pretrained(llava_model_name)
-llava_model = LlavaForConditionalGeneration.from_pretrained(llava_model_name).to(device)
+llava_processor = VideoLlavaProcessor.from_pretrained(llava_model_name)
+llava_model = VideoLlavaForConditionalGeneration.from_pretrained(llava_model_name, torch_dtype=torch.float16, device_map="auto")
 
 data_dir = "data"
 video_dir = "videos/"
@@ -29,14 +31,34 @@ question_file = os.path.join(data_dir, "questions.csv")
 correct_answers_file = os.path.join(data_dir, "correct50_submission.csv")
 output_file = os.path.join(data_dir, "predictions_comparison.csv")
 
-def timer_func(func): 
-    def wrap_func(*args, **kwargs): 
-        t1 = time.time() 
-        result = func(*args, **kwargs) 
-        t2 = time.time() 
-        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s') 
-        return result 
+def timer_func(func):
+    def wrap_func(*args, **kwargs):
+        t1 = time.time()
+        result = func(*args, **kwargs)
+        t2 = time.time()
+        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
+        return result
     return wrap_func
+
+def read_video_pyav(container, indices):
+    '''
+    Decode the video with PyAV decoder.
+    Args:
+        container (`av.container.input.InputContainer`): PyAV container.
+        indices (`List[int]`): List of frame indices to decode.
+    Returns:
+        result (np.ndarray): np array of decoded frames of shape (num_frames, height, width, 3).
+    '''
+    frames = []
+    container.seek(0)
+    start_index = indices[0]
+    end_index = indices[-1]
+    for i, frame in enumerate(container.decode(video=0)):
+        if i > end_index:
+            break
+        if i >= start_index and i in indices:
+            frames.append(frame)
+    return np.stack([x.to_ndarray(format="rgb24") for x in frames])
 
 @timer_func
 def extract_video_features(video_path):
@@ -51,7 +73,7 @@ def extract_video_features(video_path):
 
     if len(frames) == 0:
         raise ValueError(f"No frames extracted from {video_path}")
-    
+
     # Encode frames using CLIP
     pil_frames = [Image.fromarray(frame) for frame in frames]
     all_frame_features = []
@@ -64,22 +86,20 @@ def extract_video_features(video_path):
         all_frame_features.append(batch_features)
 
     video_features = torch.cat(all_frame_features, dim=0)
-    return video_features.mean(dim=0, keepdim=True)  
+    return video_features.mean(dim=0, keepdim=True)
 
 @timer_func
-def generate_llava_summary(video_frames):
+def generate_llava_summary(video_path):
     """ Uses LLAVA to generate a textual summary of the video. """
-    if not video_frames:
-        return "No frames available for summarization."
-
-    # Use the first frame as input
-    image = Image.fromarray(video_frames[0])
-    inputs = llava_processor(image, return_tensors="pt").to(device)
-
-    with torch.no_grad():
-        summary_ids = llava_model.generate(**inputs)
-
-    return llava_processor.batch_decode(summary_ids, skip_special_tokens=True)[0]
+    container = av.open(video_path)
+    total_frames = container.streams.video[0].frames
+    indices = np.arange(0, total_frames, total_frames / 8).astype(int)
+    video = read_video_pyav(container, indices)
+    # For better results, we recommend to prompt the model in the following format
+    prompt = "USER: <video>\nSummarize the key events of this video. ASSISTANT:"
+    inputs = llava_processor(text=prompt, videos=video, return_tensors="pt").to(device)
+    out = llava_model.generate(**inputs, max_new_tokens=60)
+    return llava_processor.batch_decode(out, skip_special_tokens=True, clean_up_tokenization_spaces=True)
 
 @timer_func
 def encode_text(text):
@@ -106,7 +126,7 @@ def gflow_infer(video_features, text_features):
     """ Uses GFlowNet to predict probabilities for each multiple-choice answer. """
     input_dim = video_features.shape[1] + text_features.shape[1]
     gflow_model = GFlowNet(input_dim=input_dim).to(device)
-    
+
     combined_features = torch.cat([video_features, text_features], dim=1)
     predicted_logits = gflow_model(combined_features)
     probabilities = torch.softmax(predicted_logits, dim=1)
@@ -123,7 +143,7 @@ def get_llm_response(llava_summary, clip_embeddings, probabilities, question_tex
 
     genai.configure(api_key=api_key)
 
-    prob_str = ", ".join([f"Choice {chr(65 + i)}: {prob:.4f}" for i, prob in enumerate(probabilities)])
+    prob_str = ", ".join([f"Choice {chr(65 + i)}: {prob:.4f}" for i, prob in enumerate(probabilities.flatten())])
 
     prompt = (
         f"Video Summary from LLAVA: {llava_summary}\n\n"
@@ -140,13 +160,13 @@ def get_llm_response(llava_summary, clip_embeddings, probabilities, question_tex
 
 @timer_func
 def main():
-    questions_df = pd.read_csv(question_file)
-    correct_answers_df = pd.read_csv(correct_answers_file)
+    questions_df = pd.read_csv(question_file, dtype={"id": str})
+    correct_answers_df = pd.read_csv(correct_answers_file, dtype={"id": str})
 
     predictions, probabilities_list, gemini_answers = [], [], []
 
     for _, row in questions_df.iterrows():
-        video_id = f"{row['id']:05d}"
+        video_id = f"{int(row['id']):05d}"
         video_path = os.path.join(video_dir, f"{video_id}.mp4")
         question_id = row["id"]
         question_text = row["question"]
@@ -161,16 +181,24 @@ def main():
         video_features = extract_video_features(video_path)
 
         # Generate LLAVA Summary
-        llava_summary = generate_llava_summary(video_features)
+        llava_summary = generate_llava_summary(video_path)
+
+        print(llava_summary)
 
         # Encode Question
         text_features = encode_text(question_text)
 
         # Get Probabilities from GFlowNet
-        predicted_answer, probabilities = gflow_infer(video_features, text_features)
+        predicted_index, probabilities = gflow_infer(video_features, text_features)
+        predicted_answer = chr(65 + predicted_index)  # Convert index to letter (A, B, C, D)
 
         # Get Final Answer from Gemini Flash
         gemini_response = get_llm_response(llava_summary, video_features, probabilities, question_text, question_id)
+        print(f"Question: {question_text}")
+        print(f"Predicted Answer: {predicted_answer}")
+        print(f"Probabilities: {probabilities}")
+        print(f"LLAVA Summary: {llava_summary}")
+        print(f"Gemini Response: {gemini_response}")
 
         predictions.append(predicted_answer)
         probabilities_list.append(probabilities)

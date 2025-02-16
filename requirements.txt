@@ -1,3 +1,6 @@
+av
+accelerate
+sentencepiece
 torch
 numpy
 transformers
@@ -7,5 +10,5 @@ Pillow
 ftfy
 regex
 tqdm
-google-generativeai 
+google-generativeai
 python-dotenv
