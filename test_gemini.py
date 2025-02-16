@@ -1,4 +1,3 @@
-import cv2
 import time
 import os
 import re
@@ -13,8 +12,6 @@ from pydantic import BaseModel
 # from google.colab import userdata
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-# genai.configure(api_key=GOOGLE_API_KEY)
-client = genai.Client(api_key=GOOGLE_API_KEY)
 
 class Observable(BaseModel):
   timestamp: str
@@ -41,51 +38,17 @@ def timer_func(func):
     return wrap_func
 
 @timer_func
-def preprocess_video(vid_dir, video_num, out_dir):
-    # Input video file
-    # video_path = "00044.mp4"  # Change this to your video file
-    video_path = f"{video_num:05}.mp4"
-    video_path = os.path.join(vid_dir, video_path)
-    video_name = os.path.splitext(os.path.basename(video_path))[0]  # Extract filename without extension
-    output_folder = out_dir
-
-    # Create output directory if it doesn't exist
-    os.makedirs(output_folder, exist_ok=True)
-
-    first_frame_path = os.path.join(vid_dir, f"{video_name}_first.png")
-    last_frame_path = os.path.join(vid_dir, f"{video_name}_last.png")
-
-    if os.path.exists(first_frame_path) and os.path.exists(last_frame_path):
-        print(f"First and last frames already exist for {video_name}. Skipping extraction.")
+def get_video_assets_from_cache(uploaded_files, video_num):
+    video_info = uploaded_files.get(video_num)
+    if video_info:
+        return (video_info['video'], video_info['first_frame'], video_info['last_frame'])
     else:
-        cap = cv2.VideoCapture(video_path)
-        # Get total frame count
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        # Read the first frame
-        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Go to first frame
-        ret, first_frame = cap.read()
-        if ret:
-            cv2.imwrite(first_frame_path, first_frame)
-            print(f"Saved first frame as {first_frame_path}")
+        print(f"Video {video_num} not found in cache. Uploading...")
+        video_file = client.files.upload(file=f"videos/{video_num:05}.mp4")
+        first_frame = client.files.upload(file=f"videos/{video_num:05}_first.png")
+        last_frame = client.files.upload(file=f"videos/{video_num:05}_last.png")
+        return [video_file, first_frame, last_frame]
 
-        # Read the last frame
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count - 1)  # Go to last frame
-        ret, last_frame = cap.read()
-        if ret:
-            cv2.imwrite(last_frame_path, last_frame)
-            print(f"Saved last frame as {last_frame_path}")
-
-        cap.release()
-
-    return first_frame_path, first_frame_path, last_frame_path
-
-@timer_func
-def upload_to_gemini(video_path, first_frame_path, last_frame_path):
-    # Upload the video file to Gemini
-    my_file = client.files.upload(file=video_path)
-    last_frame = client.files.upload(file=first_frame_path)
-    first_frame = client.files.upload(file=last_frame_path)
-    return my_file, first_frame, last_frame
 
 @timer_func
 def prompt_get_observables(video_contexts, question, answers):
@@ -96,7 +59,7 @@ def prompt_get_observables(video_contexts, question, answers):
     prompt = f"""
     Given this question and these possible answers, a relevant video, and the first and last frames from that video,
     1. Brainstorm a list of observables that you think will be essential to answering the question.
-    2. Generate an event log that describes the presence of the observables. The timestamp for each event should be 00:00 (seconds:milliseconds)
+    2. Generate an event log that describes the presence of the observables. The timestamp for each event should have the format "MM:SS".
     ===
     Question: {question}
     Answers: {answers}
@@ -113,8 +76,8 @@ def prompt_get_observables(video_contexts, question, answers):
     response = client.models.generate_content(
         model='gemini-2.0-flash',
         contents=[
-            prompt,
-            *video_contexts
+            *video_contexts,
+            prompt
         ],
         config={
             'response_mime_type': 'application/json',
@@ -148,8 +111,8 @@ def prompt_get_answer(video_contexts, question, answers, first_prompt, first_res
     response = client.models.generate_content(
         model='gemini-2.0-flash',
         contents=[
-            first_prompt,
             *video_contexts,
+            first_prompt,
             # my_file,
             # first_frame,
             # last_frame,
@@ -206,11 +169,13 @@ def get_question_and_answers(question_num, file_path="data/questions.csv"):
         return None
 
 if __name__ == '__main__':
+    client = genai.Client(api_key=GOOGLE_API_KEY)
     results = []  # Store results for all videos
+    uploaded_files = {item['id']: item for item in pd.read_csv("gemini_cache.csv").to_dict(orient='records')}
 
     for video_num in range(1, 252):
         # TODO: remove this block when ready
-        if video_num > 50:
+        if video_num > 10:
             results.append({"id": f"{video_num:05d}", "answer": "E"})
             continue
 
@@ -223,8 +188,7 @@ if __name__ == '__main__':
             continue
 
         question, answers = test
-        context_local_paths = preprocess_video("videos", video_num, "output")
-        video_contexts = upload_to_gemini(video_path=context_local_paths[0], first_frame_path=context_local_paths[1], last_frame_path=context_local_paths[2])
+        video_contexts = get_video_assets_from_cache(uploaded_files, video_num)
         prompt1, resp1 = prompt_get_observables(video_contexts, question, answers)
         resp2 = prompt_get_answer(video_contexts, question, answers, prompt1, resp1)
 
