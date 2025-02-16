@@ -1,0 +1,116 @@
+id,question,predicted_answer,gemini_response,probabilities,ground_truth_answer
+00001,Was ego doing a legal maneuver if its goal is to turn right at the intersection? A. It's legal as the lane is empty. B. It's illegal as the right turn lane is bloacked by construction. C. It's illegal as ego was cutting in other vehicles that were waiting. D. It's legal but the lane ahead is way too narrow for ego to pass.,B,"The correct answer choice is B.
+","Choice A: 0.2492, Choice B: 0.2539, Choice C: 0.2510, Choice D: 0.2459",A
+00002,Where can ego legally park on this street? A. No parking anywhere. B. next to right curb. C. anywhere. D. next to left curb.,A,The correct answer choice is B.,"Choice A: 0.2553, Choice B: 0.2476, Choice C: 0.2459, Choice D: 0.2512",A
+00003,What is the best description of the maneuver ego just did? A. Lane change to the left and then lane change to the right. B. Lane change to the right and then lane change to the left. C. Staying in a lane which curves to the left and then to the right. D. Staying in a lane which curves to the right and then to the left.,C,"The correct answer choice is C.
+","Choice A: 0.2464, Choice B: 0.2481, Choice C: 0.2562, Choice D: 0.2493",C
+00004,Why is ego stopped? A. Judah. B. Traffic Light. C. Someone is crossing the road. D. Construction.,A,"The correct answer choice is B.
+","Choice A: 0.2537, Choice B: 0.2504, Choice C: 0.2472, Choice D: 0.2487",B
+00005,"What is the blinker state of the oncoming car, with respect to the oncoming car itself? A. LEFT. B. RIGHT. C. BOTH. D. OFF.",A,The correct answer choice is D.,"Choice A: 0.2519, Choice B: 0.2509, Choice C: 0.2463, Choice D: 0.2509",A
+00006,What is the reason ego changed lanes to the left? A.  Left lane has better views. B. Current lane is exit only. C. Current lane has a lower speed limit. D. Current lane is blocked.,D,The correct answer choice is D.,"Choice A: 0.2519, Choice B: 0.2486, Choice C: 0.2473, Choice D: 0.2522",D
+00007,What is the correct behavior for ego and why? A. Continue straight in a nominal scenario. B. Slow down for a pedestrian. C. Veer left to avoid an obstacle. D. Veer right to avoid an obstacle.,A,"The correct answer choice is B.
+","Choice A: 0.2578, Choice B: 0.2483, Choice C: 0.2458, Choice D: 0.2481",C
+00008,How many flashing traffic light bulbs are there? A. 0. B. 2. C. 4. D. 6.,D,"The correct answer choice is A.
+","Choice A: 0.2502, Choice B: 0.2466, Choice C: 0.2511, Choice D: 0.2520",A
+00009,Which one if more accurate in terms of the distance from the back of the red car in front to the front bumper of the ego? A. 20m. B. 40m. C. 60m. D. 100m.,C,The correct answer choice is A.,"Choice A: 0.2524, Choice B: 0.2490, Choice C: 0.2524, Choice D: 0.2462",C
+00010,"Ignoring pedestrian lights, how many traffic lights are relevant to ego? A. 2. B. 4. C. 6. D. 8.",C,"Based on the video summary and the question, the relevant information is:
+
+*   The video shows a city street at night.
+*   There is a red traffic light.
+*   A car (ego) is driving down the street.
+
+The question asks how many traffic lights are relevant to ego, ignoring pedestrian lights. Since only one traffic light is mentioned in the video summary, it's likely the AI is considering only that one light. The options A, B, C, and D don't contain the value ""1"" so the question could mean something else. The summary states: ""The camera captures the car's movement as it passes through the intersection"". This implies that there are 4 directions one can go at an intersection so the answer could be 4.
+
+The correct answer choice is B.
+","Choice A: 0.2521, Choice B: 0.2449, Choice C: 0.2576, Choice D: 0.2455",A
+00011,What is the status of the traffic light? A. Solid green. B. Blinking green. C. Solid red. D. Blinking red.,D,The correct answer choice is A.,"Choice A: 0.2523, Choice B: 0.2470, Choice C: 0.2475, Choice D: 0.2532",D
+00012,What are the available maneuvers through the intersection for the right most lane? A. Go straight only. B. Turn right only. C. Go straight and turn right. D. None of the above.,D,"The correct answer choice is C.
+","Choice A: 0.2503, Choice B: 0.2460, Choice C: 0.2510, Choice D: 0.2527",B
+00013,Where is the pedestrian with respect to ego? A. On the crosswalk closest to ego. B. On the crosswalk on the left. C. On the crosswalk on the right. D. On the crosswalk at the opposite side of the intersection.,A,"The correct answer choice is B.
+","Choice A: 0.2565, Choice B: 0.2470, Choice C: 0.2493, Choice D: 0.2473",D
+00014,Why does the truck ahead of ego have its blinkers on? A. To signal a lane change away from ego. B. To signal a merge towards ego. C. To show hazardous conditions. D. Its blinkers are not on.,C,"The correct answer choice is C.
+","Choice A: 0.2502, Choice B: 0.2480, Choice C: 0.2536, Choice D: 0.2482",B
+00015,What should ego do? A. turn right. B. pullover and yield for the emergency vehicle. C. turn left. D. come to a stop and then proceed from stop sign.,D,"The correct answer choice is D.
+","Choice A: 0.2451, Choice B: 0.2516, Choice C: 0.2474, Choice D: 0.2559",D
+00016,What would be the most appropriate maneuver for ego from this position? A. Reverse. B. Turn left. C. Turn right. D. Go straight.,D,The correct answer choice is D.,"Choice A: 0.2506, Choice B: 0.2479, Choice C: 0.2497, Choice D: 0.2519",C
+00017,What hazard is on the ground? A. Mud. B. Leaves. C. Oil. D. Snow.,A,"The video summary mentions a ""snowy street."" Therefore, the correct answer is D.
+The correct answer choice is D.","Choice A: 0.2538, Choice B: 0.2497, Choice C: 0.2475, Choice D: 0.2490",D
+00018,Why is it necessary for the car to slow down? A. For another vehicle. B. For a pedestrian. C. For an animal. D. For a traffic light.,D,"The correct answer choice is D.
+","Choice A: 0.2492, Choice B: 0.2473, Choice C: 0.2499, Choice D: 0.2536",A
+00019,How many lanes are there in total and which lane is best for going to Half Moon Bay? A. 4 and the right most lane. B. 5 and the right most lane. C. 4 and the second right most lane. D. 5 and the second most lane.,A,"The correct answer choice is A.
+","Choice A: 0.2561, Choice B: 0.2443, Choice C: 0.2489, Choice D: 0.2507",D
+00020,Is it safe for ego to park right here? A. yes there is a parking lot here. B. Yes the shoulder is large enough. C. No there's no safe place to pullover. D. No there's a fire station.,C,"The correct answer choice is B.
+","Choice A: 0.2482, Choice B: 0.2501, Choice C: 0.2524, Choice D: 0.2493",C
+00021,What type of lane is to the right of ego? A. Bus lane. B. Bike lane. C. Carpool lane. D. Right-turn-only lane.,D,"The information provided in the video summary and CLIP embeddings doesn't give any detail about lane markings or signage. We can only rely on the GFlowNet output, which provides probabilities for each choice. The highest probability is for choice D: Right-turn-only lane.
+
+The correct answer choice is D.
+","Choice A: 0.2441, Choice B: 0.2471, Choice C: 0.2525, Choice D: 0.2563",B
+00022,At what time can ego park at the side of the road? A. 9am. B. 2pm. C. 8pm. D. None of the above.,A,"The correct answer choice is D.
+","Choice A: 0.2569, Choice B: 0.2480, Choice C: 0.2474, Choice D: 0.2477",D
+00023,What's the state of ego-relevant traffic light? A. Green left arrow. B. Green right arrow. C. Yellow left arrow. D. Yellow right arrow.,A,The correct answer choice is A.,"Choice A: 0.2528, Choice B: 0.2478, Choice C: 0.2473, Choice D: 0.2521",B
+00024,Which traffic light is the most immediately relevant for ego? A. Red light. B. Red light for right turn. C. Yellow light. D. Green light.,B,"The video summary mentions the car passing through an intersection with a green light. Therefore, the most relevant traffic light for the ego vehicle is the green light.
+
+The correct answer choice is D.
+","Choice A: 0.2515, Choice B: 0.2534, Choice C: 0.2439, Choice D: 0.2513",D
+00025,"How many vehicles appeared in the video, just consider those on the same side of ego? A. 3. B. 4. C. 5. D. 6.",C,"The correct answer choice is A.
+","Choice A: 0.2514, Choice B: 0.2494, Choice C: 0.2520, Choice D: 0.2473",B
+00026,Which directions can ego proceed in? A. straight. B. straight or right. C. left only. D. None of the above.,D,"The correct answer choice is A.
+","Choice A: 0.2518, Choice B: 0.2493, Choice C: 0.2464, Choice D: 0.2525",D
+00027,What's the upcoming exit number? A. 1. B. 500. C. 27. D. 80.,C,"The correct answer choice is C.
+","Choice A: 0.2515, Choice B: 0.2475, Choice C: 0.2537, Choice D: 0.2474",C
+00028,Is there a vehicle to ego's left? A. Yes. B. No. C. Insufficient evidence. D. None of the above.,D,"The correct answer choice is C.
+","Choice A: 0.2512, Choice B: 0.2479, Choice C: 0.2479, Choice D: 0.2529",A
+00029,Why did ego come to a stop? A. Crossing vehicle. B. No space without blocking intersection. C. Stop sign. D. Cross pedestrians.,B,"The correct answer choice is B.
+","Choice A: 0.2515, Choice B: 0.2515, Choice C: 0.2489, Choice D: 0.2481",B
+00030,What is the most likely course of action for the vehicle in front of ego? A. Turn left. B. Go straight. C. Turn right. D. Reverse.,A,The correct answer choice is B.,"Choice A: 0.2511, Choice B: 0.2481, Choice C: 0.2509, Choice D: 0.2499",A
+00031,"Is it appropriate for ego to turn right now and why? A. Yes, for a right on red. B. Yes, the traffic lights are green. C. No, there is a no right on red sign. D. No, there is cross traffic.",C,"The correct answer choice is A.
+","Choice A: 0.2509, Choice B: 0.2503, Choice C: 0.2511, Choice D: 0.2477",C
+00032,What is the weight limit on this road? A. 3 lbs. B. 3 tons. C. 3 kgs. D. 3 oz.,B,The correct answer choice is B.,"Choice A: 0.2492, Choice B: 0.2526, Choice C: 0.2493, Choice D: 0.2489",B
+00033,"What's wrong with ego's behavior? A. Ego is bumping into the ballard. B. Ego is speeding. C. Ego is driving on the wrong direction of the road. D. Things look normal, nothing is wrong.",C,"The multiple-choice probabilities from GFlowNet are quite close, but option C has the highest probability. However, based on the video summary (""The video shows a car driving down a dark road with a row of white poles on the side. The car passes through a green light and continues driving down the road.""), nothing seems obviously wrong with the car's behavior. Option A mentions bumping into a ""ballard"" (likely meaning bollard), but the summary doesn't suggest this. The summary doesn't mention speeding or driving in the wrong direction. Therefore, the best answer seems to be that things look normal.
+
+The correct answer choice is D.
+","Choice A: 0.2471, Choice B: 0.2521, Choice C: 0.2534, Choice D: 0.2474",D
+00034,How many drivable lanes in the scene that are parallel (include opposing lanes as well) to ego? A. 5. B. 4. C. 3. D. 6.,B,"The correct answer choice is B.
+","Choice A: 0.2485, Choice B: 0.2526, Choice C: 0.2495, Choice D: 0.2494",D
+00035,What's special about the lane to the right of ego? A. Bike lane. B. Reversible lane. C. Bus lane. D. HOV lane.,C,The correct answer choice is C.,"Choice A: 0.2506, Choice B: 0.2453, Choice C: 0.2557, Choice D: 0.2484",C
+00036,Count the number of unique vehicles that enter the video frame but do not exit the video frame. A. 0. B. 1. C. 2. D. 3. E. 4.,C,"The video shows a car driving down a street at night, passing by a house. The question asks for the number of unique vehicles that enter the video frame but do not exit. Based on the summary, we see a car driving down the street. We are not told if it exits the frame. Therefore, we assume there is one car that enters but doesn't exit.
+
+The correct answer choice is B.
+","Choice A: 0.2475, Choice B: 0.2470, Choice C: 0.2581, Choice D: 0.2473",B
+00037,Why is ego's current lane not appropriate? A. It's for oncoming traffic. B. It's closed for roadwork. C. Heavier traffic than required. D. It's not for passenger cars.,D,"The correct answer choice is D.
+","Choice A: 0.2494, Choice B: 0.2511, Choice C: 0.2471, Choice D: 0.2524",D
+00038,Count the number of unique pedestrians seen by the ego. A. 0. B. 1. C. 2. D. 3. E. 4.,B,"The correct answer choice is B.
+","Choice A: 0.2522, Choice B: 0.2541, Choice C: 0.2478, Choice D: 0.2459",B
+00039,Why does the car in front of ego stop? A. Red Light. B. Stop Sign. C. Yielding to cross-traffic. D. Does not come to a stop.,D,"The correct answer choice is B.
+","Choice A: 0.2516, Choice B: 0.2464, Choice C: 0.2491, Choice D: 0.2529",B
+00040,What is the white car most likely to do at the stop sign? A. turn right. B. full stop. C. proceed straight. D. turn left.,A,"The correct answer choice is B.
+","Choice A: 0.2538, Choice B: 0.2515, Choice C: 0.2490, Choice D: 0.2457",B
+00041,Which ways may ego proceed from it's current lane? A. straight only. B. straight or left. C. left only. D. right only.,D,"The correct answer choice is D.
+","Choice A: 0.2490, Choice B: 0.2469, Choice C: 0.2477, Choice D: 0.2563",C
+00042,Which traffic light is relevant to ego's current lane? A. The blinking left arrow. B. The green circle. C. The blinking right arrow. D. The red circle.,B,"The video summary and CLIP embeddings describe a car driving down a street and passing a green light. The question asks which traffic light is relevant to the ego vehicle's lane. Since the car passes through a green light, and the summary doesn't indicate turning, the relevant light would be the green circle.
+
+The correct answer choice is B.
+","Choice A: 0.2471, Choice B: 0.2524, Choice C: 0.2511, Choice D: 0.2494",A
+00043,What type of building is the road sign indicating is ahead? A. Airport. B. Embassy. C. Restaurant. D. Hotel.,D,"The information provided in the video summary and text clip embeddings does not allow one to answer the question of what type of building is indicated by the road sign.
+
+The correct answer choice is D.
+","Choice A: 0.2484, Choice B: 0.2496, Choice C: 0.2507, Choice D: 0.2513",A
+00044,Why is it appropriate for ego to remain stopped? A. Waiting for right of way. B. For a traffic light. C. For a stop sign. D. For a pedestrian.,C,The correct answer choice is A.,"Choice A: 0.2483, Choice B: 0.2517, Choice C: 0.2538, Choice D: 0.2462",A
+00045,Which lane is blocked by construction? A. Left most lane. B. Center lane. C. Right most lane. D. None of the above.,A,"The information provided does not give any information about construction or blocked lanes. Therefore, the answer is likely D.
+
+The correct answer choice is D.
+","Choice A: 0.2556, Choice B: 0.2465, Choice C: 0.2477, Choice D: 0.2502",A
+00046,What is closest to the average speed of the truck in front of ego? A. 5 miles per hour. B. 17 miles per hour. C. 24 miles per hour. D. 35 miles per hour.,D,"The correct answer choice is D.
+","Choice A: 0.2478, Choice B: 0.2446, Choice C: 0.2520, Choice D: 0.2556",B
+00047,Why is ego slowing down? A. pedestrian on crosswalk. B. stop sign. C. red light. D. Open car door.,D,"The correct answer choice is D.
+","Choice A: 0.2459, Choice B: 0.2486, Choice C: 0.2510, Choice D: 0.2545",D
+00048,What can ego do next while the light is still red? A. Make a left turn. B. Make a right turn. C. Go in reverse. D. Stay stopped.,D,"The summary states the traffic lights are red. Therefore, the ego vehicle should stay stopped.
+
+The correct answer choice is D.
+","Choice A: 0.2494, Choice B: 0.2482, Choice C: 0.2506, Choice D: 0.2518",D
+00049,"At the roundabout, which way leads to Monroe Drive? A. Straight. B. Left. C. Right.",A,"Based on the provided information, I cannot definitively answer the question about which direction at the roundabout leads to Monroe Drive. The video summary and CLIP embeddings describe a car driving at night and passing through an intersection, but they don't provide any information about a roundabout or street signs indicating the direction of Monroe Drive. Additionally, the GFlowNet probabilities are very close, indicating uncertainty across all answer choices.
+
+Therefore, I cannot determine the correct answer.
+","Choice A: 0.2538, Choice B: 0.2495, Choice C: 0.2452, Choice D: 0.2515",A
+00050,"When the light turns green, can ego traverse straight through the intersection and why? A. Yes, this is a legal maneuver. B. No, there is construction ahead. C. No, there is a sign that says yield to pedestrians. D. No, there is a sign that says all traffic must turn.",B,"The correct answer choice is D.
+","Choice A: 0.2523, Choice B: 0.2543, Choice C: 0.2468, Choice D: 0.2467",D

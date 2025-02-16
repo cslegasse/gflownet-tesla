@@ -7,8 +7,7 @@ import torch
 import pandas as pd
 from PIL import Image
 from transformers import (
-    AutoModelForSeq2SeqLM, AutoTokenizer, CLIPProcessor, CLIPModel, LlavaProcessor, VideoLlavaForConditionalGeneration, VideoLlavaProcessor
-
+    CLIPProcessor, CLIPModel, VideoLlavaForConditionalGeneration, VideoLlavaProcessor
 )
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -23,12 +22,15 @@ clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 # Load LLAVA VLM model for video summarization
 llava_model_name = "LanguageBind/Video-LLaVA-7B-hf"
 llava_processor = VideoLlavaProcessor.from_pretrained(llava_model_name)
-llava_model = VideoLlavaForConditionalGeneration.from_pretrained(llava_model_name, torch_dtype=torch.float16, device_map="auto")
+llava_model = VideoLlavaForConditionalGeneration.from_pretrained(
+    llava_model_name, torch_dtype=torch.float16, device_map="auto"
+)
 
+# Directory and file paths
 data_dir = "data"
 video_dir = "videos/"
 question_file = os.path.join(data_dir, "questions.csv")
-correct_answers_file = os.path.join(data_dir, "correct50_submission.csv")
+correct_answers_file = os.path.join(data_dir, "correct50_submission.csv")  # ground truth file: id,answer (e.g., A)
 output_file = os.path.join(data_dir, "predictions_comparison.csv")
 
 def timer_func(func):
@@ -41,14 +43,14 @@ def timer_func(func):
     return wrap_func
 
 def read_video_pyav(container, indices):
-    '''
+    """
     Decode the video with PyAV decoder.
     Args:
-        container (`av.container.input.InputContainer`): PyAV container.
-        indices (`List[int]`): List of frame indices to decode.
+        container (av.container.input.InputContainer): PyAV container.
+        indices (List[int]): List of frame indices to decode.
     Returns:
-        result (np.ndarray): np array of decoded frames of shape (num_frames, height, width, 3).
-    '''
+        np.ndarray: Decoded frames of shape (num_frames, height, width, 3).
+    """
     frames = []
     container.seek(0)
     start_index = indices[0]
@@ -90,12 +92,12 @@ def extract_video_features(video_path):
 
 @timer_func
 def generate_llava_summary(video_path):
-    """ Uses LLAVA to generate a textual summary of the video. """
+    """Uses LLAVA to generate a textual summary of the video."""
     container = av.open(video_path)
     total_frames = container.streams.video[0].frames
     indices = np.arange(0, total_frames, total_frames / 8).astype(int)
     video = read_video_pyav(container, indices)
-    # For better results, we recommend to prompt the model in the following format
+    # Prompt format for better results
     prompt = "USER: <video>\nSummarize the key events of this video. ASSISTANT:"
     inputs = llava_processor(text=prompt, videos=video, return_tensors="pt").to(device)
     out = llava_model.generate(**inputs, max_new_tokens=60)
@@ -103,7 +105,7 @@ def generate_llava_summary(video_path):
 
 @timer_func
 def encode_text(text):
-    """ Converts text into a CLIP-compatible feature vector. """
+    """Converts text into a CLIP-compatible feature vector."""
     inputs = clip_processor(text=[text], images=None, return_tensors="pt", padding=True, truncation=True)
     return clip_model.get_text_features(inputs["input_ids"].to(device))
 
@@ -123,7 +125,7 @@ class GFlowNet(torch.nn.Module):
 
 @timer_func
 def gflow_infer(video_features, text_features):
-    """ Uses GFlowNet to predict probabilities for each multiple-choice answer. """
+    """Uses GFlowNet to predict probabilities for each multiple-choice answer."""
     input_dim = video_features.shape[1] + text_features.shape[1]
     gflow_model = GFlowNet(input_dim=input_dim).to(device)
 
@@ -137,14 +139,12 @@ def gflow_infer(video_features, text_features):
 def get_llm_response(llava_summary, clip_embeddings, probabilities, question_text, question_id):
     load_dotenv()
     api_key = os.getenv("GEMINI_API_KEY")
-
     if not api_key:
         raise ValueError("Gemini API key not found in .env file")
 
     genai.configure(api_key=api_key)
 
     prob_str = ", ".join([f"Choice {chr(65 + i)}: {prob:.4f}" for i, prob in enumerate(probabilities.flatten())])
-
     prompt = (
         f"Video Summary from LLAVA: {llava_summary}\n\n"
         f"Text CLIP Embeddings: {clip_embeddings}\n\n"
@@ -153,9 +153,8 @@ def get_llm_response(llava_summary, clip_embeddings, probabilities, question_tex
         "State your final answer as: The correct answer choice is X."
     )
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
     response = model.generate_content(prompt)
-
     return response.text
 
 @timer_func
@@ -164,6 +163,7 @@ def main():
     correct_answers_df = pd.read_csv(correct_answers_file, dtype={"id": str})
 
     predictions, probabilities_list, gemini_answers = [], [], []
+    processed_ids, processed_questions = [], []
 
     for _, row in questions_df.iterrows():
         video_id = f"{int(row['id']):05d}"
@@ -183,8 +183,6 @@ def main():
         # Generate LLAVA Summary
         llava_summary = generate_llava_summary(video_path)
 
-        print(llava_summary)
-
         # Encode Question
         text_features = encode_text(question_text)
 
@@ -194,26 +192,42 @@ def main():
 
         # Get Final Answer from Gemini Flash
         gemini_response = get_llm_response(llava_summary, video_features, probabilities, question_text, question_id)
+
+        print(f"LLAVA Summary: {llava_summary}")
         print(f"Question: {question_text}")
         print(f"Predicted Answer: {predicted_answer}")
         print(f"Probabilities: {probabilities}")
-        print(f"LLAVA Summary: {llava_summary}")
         print(f"Gemini Response: {gemini_response}")
 
+        # Append results for saving later
+        processed_ids.append(row["id"])
+        processed_questions.append(question_text)
         predictions.append(predicted_answer)
         probabilities_list.append(probabilities)
         gemini_answers.append(gemini_response)
 
-    # Save results
-    questions_df["predicted"] = predictions
-    questions_df["probabilities"] = probabilities_list
-    questions_df["gemini_answer"] = gemini_answers
+    # Format probabilities for each question (e.g., "Choice A: 0.1234, Choice B: 0.4567, ...")
+    formatted_probs = []
+    for prob in probabilities_list:
+        prob_str = ", ".join([f"Choice {chr(65 + i)}: {p:.4f}" for i, p in enumerate(prob.flatten())])
+        formatted_probs.append(prob_str)
 
-    results_df = questions_df[["id", "predicted", "gemini_answer"]].merge(correct_answers_df, on="id")
-    results_df.rename(columns={"correct": "correct_answer"}, inplace=True)
+    # Create a DataFrame with the collected results
+    results_df = pd.DataFrame({
+        "id": processed_ids,
+        "question": processed_questions,
+        "predicted_answer": predictions,
+        "gemini_response": gemini_answers,
+        "probabilities": formatted_probs
+    })
 
+    # Merge with the ground truth answers (file now contains id and answer, e.g., "A")
+    results_df = results_df.merge(correct_answers_df, on="id", how="left")
+    results_df.rename(columns={"answer": "ground_truth_answer"}, inplace=True)
+
+    # Save the results DataFrame to CSV
     results_df.to_csv(output_file, index=False)
-    print(f"Predictions saved to {output_file}")
+    print(f"Results saved to {output_file}")
 
 if __name__ == '__main__':
     main()
