@@ -63,7 +63,7 @@ def prompt_get_observables(video_contexts, question, answers):
 
 
     print("Making LLM inference request...")
-   
+
     response = client.models.generate_content(
         model='gemini-2.0-flash',
         contents=[
@@ -95,7 +95,7 @@ def prompt_get_answer(video_contexts, question, answers, first_prompt, first_res
 
 
     print("Making LLM inference request...")
-    
+
     response = client.models.generate_content(
         model='gemini-2.0-flash',
         contents=[
@@ -133,22 +133,29 @@ def get_question_and_answers(question_num, file_path="data/questions.csv"):
     if not question_row.empty:
         question_text = question_row["question"].values[0]
 
-        match = re.split(r'(?=\s*A\.)', question_text, maxsplit=1)  
+        match = re.split(r'(?=\s*A\.)', question_text, maxsplit=1)
 
         if len(match) == 2:
             question_part = match[0].strip()
             answers = match[1].strip()
         else:
             question_part = question_text.strip()
-            answers = []  
+            answers = []
 
         return question_part, answers
     else:
         return None
 
+def append_to_csv(file_path, data):
+    """Appends a dictionary to a CSV file.  Creates the file if it doesn't exist."""
+    df = pd.DataFrame([data])
+    if os.path.exists(file_path):
+        df.to_csv(file_path, mode='a', header=False, index=False)
+    else:
+        df.to_csv(file_path, mode='w', header=True, index=False)  # Create with header
+
 if __name__ == '__main__':
     client = genai.Client(api_key=GOOGLE_API_KEY)
-    results = []  
     uploaded_files = {item['id']: item for item in pd.read_csv("gemini_cache.csv").to_dict(orient='records')}
 
     for video_num in range(1, 252):
@@ -161,7 +168,7 @@ if __name__ == '__main__':
 
         if test is None:
             print(f"Skipping video {video_num} due to missing question.")
-            results.append({"id": f"{video_num:05d}", "answer": "Unknown"}) 
+            append_to_csv("output/submission.csv", {"id": f"{video_num:05d}", "answer": "Unknown"})
             continue
 
         question, answers = test
@@ -174,9 +181,4 @@ if __name__ == '__main__':
             predicted_answer = answer_match.group(1)
         else:
             predicted_answer = "Unknown"  # Handle cases where the answer isn't found (Gemini)
-
-        results.append({"id": f"{video_num:05d}", "answer": predicted_answer})
-
-    # Create a DataFrame from all results
-    output_df = pd.DataFrame(results)
-    output_df.to_csv("output/submission.csv", index=False)
+        append_to_csv("output/submission.csv", {"id": f"{video_num:05d}", "answer": predicted_answer})
