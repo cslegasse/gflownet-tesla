@@ -11,8 +11,5 @@
 /venv/
 venv
 .env
-
-
 __pycache__
-
 gemini_cache.csv

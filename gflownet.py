@@ -15,11 +15,11 @@ from dotenv import load_dotenv
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Load CLIP for vision-language encoding
+# Load CLIP
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-# Load LLAVA VLM model for video summarization
+# Load LLAVA VLM model
 llava_model_name = "LanguageBind/Video-LLaVA-7B-hf"
 llava_processor = VideoLlavaProcessor.from_pretrained(llava_model_name)
 llava_model = VideoLlavaForConditionalGeneration.from_pretrained(

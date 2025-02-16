@@ -1,25 +1,18 @@
 import cv2
 import pandas as pd
 import os
-
 from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 
-
 def preprocess_video(vid_dir, video_num, out_dir):
-    # Input video file
-    # video_path = "00044.mp4"  # Change this to your video file
     video_path = f"{video_num:05}.mp4"
     video_path = os.path.join(vid_dir, video_path)
-    video_name = os.path.splitext(os.path.basename(video_path))[
-        0
-    ]  # Extract filename without extension
-    output_folder = out_dir
+    video_name = os.path.splitext(os.path.basename(video_path))[0] 
 
-    # Create output directory if it doesn't exist
+    output_folder = out_dir
     os.makedirs(output_folder, exist_ok=True)
 
     first_frame_path = os.path.join(vid_dir, f"{video_name}_first.png")
@@ -31,8 +24,8 @@ def preprocess_video(vid_dir, video_num, out_dir):
         )
     else:
         cap = cv2.VideoCapture(video_path)
-        # Get total frame count
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
         # Read the first frame
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Go to first frame
         ret, first_frame = cap.read()
@@ -52,6 +45,7 @@ def preprocess_video(vid_dir, video_num, out_dir):
     return first_frame_path, first_frame_path, last_frame_path
 
 
+# Upload prompting and frames to Gemini
 def upload_to_gemini(video_path, first_frame_path, last_frame_path):
     my_file = client.files.upload(file=video_path)
     last_frame = client.files.upload(file=first_frame_path)
@@ -64,16 +58,14 @@ if __name__ == "__main__":
     uploaded_files = []  # Store results for all videos
 
     for video_num in range(1, 252):
-        # TODO: remove this block when ready
-        if video_num > 10:
-            break
-
         context_local_paths = preprocess_video("videos", video_num, "output")
         uploaded_file_assets = upload_to_gemini(
             video_path=context_local_paths[0],
             first_frame_path=context_local_paths[1],
             last_frame_path=context_local_paths[2],
         )
+
+        # Structural output to append to Gemini
         uploaded_files.append(
             {
                 "id": f"{video_num:05d}",
@@ -85,6 +77,4 @@ if __name__ == "__main__":
 
     # Create a DataFrame from all results
     gemini_cache = pd.DataFrame(uploaded_files)
-
-    # Save to CSV
     gemini_cache.to_csv("gemini_cache.csv", index=False)
